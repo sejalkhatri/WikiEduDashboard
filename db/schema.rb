@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160317225947) do
+ActiveRecord::Schema.define(version: 20160404235251) do
 
   create_table "articles", force: :cascade do |t|
     t.string   "title",                    limit: 255
@@ -82,6 +82,14 @@ ActiveRecord::Schema.define(version: 20160317225947) do
     t.datetime "created_at"
     t.datetime "updated_at"
   end
+
+  create_table "cohorts_survey_assignments", id: false, force: :cascade do |t|
+    t.integer "survey_assignment_id", limit: 4
+    t.integer "cohort_id",            limit: 4
+  end
+
+  add_index "cohorts_survey_assignments", ["cohort_id"], name: "index_cohorts_survey_assignments_on_cohort_id", using: :btree
+  add_index "cohorts_survey_assignments", ["survey_assignment_id"], name: "index_cohorts_survey_assignments_on_survey_assignment_id", using: :btree
 
   create_table "commons_uploads", force: :cascade do |t|
     t.integer  "user_id",     limit: 4
@@ -159,6 +167,16 @@ ActiveRecord::Schema.define(version: 20160317225947) do
     t.string   "gradeable_item_type", limit: 255
   end
 
+  create_table "question_group_conditionals", force: :cascade do |t|
+    t.integer  "rapidfire_question_group_id", limit: 4
+    t.integer  "cohort_id",                   limit: 4
+    t.datetime "created_at",                            null: false
+    t.datetime "updated_at",                            null: false
+  end
+
+  add_index "question_group_conditionals", ["cohort_id"], name: "index_question_group_conditionals_on_cohort_id", using: :btree
+  add_index "question_group_conditionals", ["rapidfire_question_group_id"], name: "index_question_group_conditionals_on_rapidfire_question_group_id", using: :btree
+
   create_table "rapidfire_answer_groups", force: :cascade do |t|
     t.integer  "question_group_id", limit: 4
     t.integer  "user_id",           limit: 4
@@ -186,6 +204,7 @@ ActiveRecord::Schema.define(version: 20160317225947) do
     t.string   "name",       limit: 255
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.string   "tags",       limit: 255
   end
 
   create_table "rapidfire_questions", force: :cascade do |t|
@@ -228,6 +247,35 @@ ActiveRecord::Schema.define(version: 20160317225947) do
 
   add_index "revisions", ["article_id", "date"], name: "index_revisions_on_article_id_and_date", using: :btree
 
+  create_table "survey_assignments", force: :cascade do |t|
+    t.integer  "courses_user_role",     limit: 4
+    t.datetime "created_at",                                          null: false
+    t.datetime "updated_at",                                          null: false
+    t.integer  "send_date_days",        limit: 4
+    t.integer  "survey_id",             limit: 4
+    t.boolean  "send_before",                         default: true
+    t.string   "send_date_relative_to", limit: 255
+    t.boolean  "published",                           default: false
+    t.text     "notes",                 limit: 65535
+  end
+
+  add_index "survey_assignments", ["survey_id"], name: "index_survey_assignments_on_survey_id", using: :btree
+
+  create_table "survey_notifications", force: :cascade do |t|
+    t.integer  "courses_user_id",      limit: 4
+    t.integer  "course_id",            limit: 4
+    t.integer  "survey_assignment_id", limit: 4
+    t.boolean  "dismissed",                      default: false
+    t.boolean  "email_sent",                     default: false
+    t.datetime "created_at",                                     null: false
+    t.datetime "updated_at",                                     null: false
+    t.boolean  "completed",                      default: false
+  end
+
+  add_index "survey_notifications", ["course_id"], name: "index_survey_notifications_on_course_id", using: :btree
+  add_index "survey_notifications", ["courses_user_id"], name: "index_survey_notifications_on_courses_user_id", using: :btree
+  add_index "survey_notifications", ["survey_assignment_id"], name: "index_survey_notifications_on_survey_assignment_id", using: :btree
+
   create_table "surveys", force: :cascade do |t|
     t.string   "name",         limit: 255
     t.datetime "created_at",                                 null: false
@@ -235,6 +283,8 @@ ActiveRecord::Schema.define(version: 20160317225947) do
     t.text     "intro",        limit: 65535
     t.text     "thanks",       limit: 65535
     t.boolean  "show_courses",               default: false
+    t.boolean  "open",                       default: false
+    t.boolean  "closed",                     default: false
   end
 
   create_table "surveys_question_groups", force: :cascade do |t|

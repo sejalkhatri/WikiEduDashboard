@@ -124,5 +124,11 @@
     "test": "gulp js_coverage",
     "start": "gulp hot-dev",
     "build": "webpack -p --config config/webpack/webpack.config.prod.js"
+  },
+  "devDependencies": {
+    "lodash.assign": "^4.0.7",
+    "slick-carousel": "^1.5.9",
+    "striptags": "^2.1.1",
+    "url-parse": "^1.1.1"
   }
 }

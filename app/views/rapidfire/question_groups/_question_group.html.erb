@@ -6,10 +6,18 @@
   <div>
   <% if question_group.questions.length > 0 %>
   <div class='course-list__col'>
-    <%= link_to "Preview", new_question_group_answer_group_path(question_group) %>
+    <%= link_to "Preview", "#{new_question_group_answer_group_path(question_group)}?preview" %>
   </div>
   <% end %>
   <% if can_administer? %>
+    <div class='course-list__col'>
+      <%= link_to "Edit", edit_question_group_path(question_group) %>
+    </div>
+
+    <div class='course-list__col'>
+      <%= link_to "Edit Questions", question_group_questions_path(question_group) %>
+    </div>
+
     <div class='course-list__col'>
       <%= link_to "Clone", "/surveys/question_group/clone/#{question_group.id}", method: :post %>
     </div>
@@ -17,9 +25,7 @@
     <div class='course-list__col'>
       <%= link_to "Add Question", new_question_group_question_path(question_group) %>
     </div>
-    <div class='course-list__col'>
-      <%= link_to "Edit", question_group_questions_path(question_group) %>
-    </div>
+
     <div class='course-list__col'>
       <%= link_to "Results", [:results, question_group] %>
     </div>
@@ -30,4 +36,3 @@
   </div>
 </div>
 </li>
-

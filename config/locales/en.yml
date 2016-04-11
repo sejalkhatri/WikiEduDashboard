@@ -252,6 +252,10 @@ en:
     word_count_doc: An estimate of the number of words added to mainspace articles by the course's students during the course term
     yourcourses: Your Courses
 
+    survey:
+      notification_message: A survey is available for this course
+      link: Take Survey
+
   # These are strings that are not specific to education/classroom contexts
   courses_generic:
     articles_none: There are no edited articles for this project yet.
@@ -482,3 +486,9 @@ en:
     unable_to_add_week: >
       You cannot add new weeks when your timeline is full. Delete at least one
       week or change your assignment dates to make room for a new one.
+
+  survey:
+    email:
+      headline: "Hello, %{username}"
+      message: "A survey is available for: %{course_title}"
+      link: "Take Survey"

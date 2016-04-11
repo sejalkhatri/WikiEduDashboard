@@ -1,10 +1,28 @@
 class SurveysController < ApplicationController
   helper Rapidfire::ApplicationHelper
   include CourseHelper
+  include SurveysHelper
+  include QuestionGroupsHelper
 
-  before_action :set_survey, only: [:show, :edit, :update, :destroy, :edit_question_groups, :course_select, :show_with_course]
-  before_action :set_question_groups, only: [:show, :edit, :edit_question_groups, :show_with_course]
-  before_action :set_survey_course, only: [:show]
+  before_action :require_admin_permissions, except: [:show]
+  before_action :set_survey, only: [
+    :show,
+    :edit,
+    :update,
+    :destroy,
+    :edit_question_groups,
+    :course_select,
+    :show_with_course
+  ]
+  before_action :set_question_groups, only: [
+    :show,
+    :edit,
+    :edit_question_groups,
+    :show_with_course
+  ]
+  before_action :check_if_closed, only: [:show]
+  before_action :set_notification, only: [:show]
+  before_action :set_course, only: [:show]
 
   # GET /surveys
   # GET /surveys.json
@@ -16,10 +34,14 @@ class SurveysController < ApplicationController
   # GET /surveys/1.json
   def show
     @courses = Course.all
-    if @survey.show_courses && !has_course_slug
-      render "course_select"
+    unless validate_user_for_survey
+      redirect_to(main_app.root_path, flash: { notice: 'Sorry, You do not have access to this survey' })
+      return
+    end
+    if @survey.show_courses && !course?
+      render 'course_select'
     else
-      render "show"
+      render 'show'
     end
   end
 
@@ -102,34 +124,81 @@ class SurveysController < ApplicationController
   end
 
   def update_question_group_position
-    question_group = SurveysQuestionGroup.where(survey_id: params[:survey_id], rapidfire_question_group_id: params[:question_group_id]).first
+    question_group = SurveysQuestionGroup.where(
+      survey_id: params[:survey_id],
+      rapidfire_question_group_id: params[:question_group_id]).first
     question_group.insert_at(params[:position].to_i)
     render nothing: true
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_survey
-      @survey = Survey.find(params[:id])
-    end
 
-    def has_course_slug
-      params.key?("course_slug")
-    end
+  def set_survey
+    @survey = Survey.find(params[:id])
+  end
 
-    def set_survey_course
-      if has_course_slug
-        @course = find_course_by_slug(params[:course_slug]) 
-      end
-    end
+  def set_question_groups
+    @question_groups = Rapidfire::QuestionGroup.all
+    @surveys_question_groups = SurveysQuestionGroup.by_position(params[:id])
+  end
 
-    def set_question_groups
-      @question_groups = Rapidfire::QuestionGroup.all
-      @surveys_question_groups = SurveysQuestionGroup.by_position(params[:id])
-    end
+  # Never trust parameters from the scary internet, only allow the white list through.
+  def survey_params
+    params.require(:survey).permit(:name,
+                                   :intro,
+                                   :thanks,
+                                   :show_courses,
+                                   :closed,
+                                   :open,
+                                   rapidfire_question_group_ids: [])
+  end
 
-    # Never trust parameters from the scary internet, only allow the white list through.
-    def survey_params
-      params.require(:survey).permit(:name, :intro, :thanks, :show_courses, :rapidfire_question_group_ids => [])
+  def validate_user_for_survey
+    return true if @survey.open
+    return true if can_administer?
+    return true if !current_user.nil? && user_is_assigned_to_survey
+    return false
+  end
+
+  def user_is_assigned_to_survey(return_notification = false)
+    users = courses_users
+    return false if users.empty?
+    users.each do |cu|
+      notification = survey_notification(cu.id)
+      return false unless notification && notification.survey.id == @survey.id
+      return true unless return_notification
+      return notification if return_notification
     end
+  end
+
+  def courses_users
+    CoursesUsers.where(user_id: current_user.id)
+  end
+
+  def survey_notification(id)
+    SurveyNotification.find_by(courses_user_id: id)
+  end
+
+  def check_if_closed
+    if @survey.closed
+      redirect_to(main_app.root_path, flash: { notice: 'Sorry, this survey has been closed.' })
+    end
+  end
+
+  def set_notification
+    @notification = user_is_assigned_to_survey(true)
+  end
+
+  def set_course
+    @course = find_course_by_slug(params[:course_slug]) if course_slug?
+    @course = @notification.course if @notification.instance_of?(SurveyNotification)
+  end
+
+  def course_slug?
+    params.key?(:course_slug)
+  end
+
+  def course?
+    !@course.nil?
+  end
 end

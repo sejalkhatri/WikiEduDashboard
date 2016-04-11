@@ -6,7 +6,7 @@ var output = "./public/assets/javascripts";
 module.exports = {
     entry: {
         main : source + "main.js",
-        survey: source + "surveys/survey.coffee",
+        survey: source + "surveys/survey.js",
         survey_admin: source + "surveys/survey-admin.coffee"
     },
     output: {
@@ -48,8 +48,8 @@ module.exports = {
     },
 
     plugins: [
-        new ManifestPlugin({
-            fileName: 'rev-manifest.json'
-        })
+      new ManifestPlugin({
+        fileName: 'rev-manifest.json'
+      })
     ]
 };

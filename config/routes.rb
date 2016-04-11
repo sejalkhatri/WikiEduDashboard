@@ -144,6 +144,8 @@ Rails.application.routes.draw do
   # Unauthenticated users root to the home page
   root to: 'home#index'
 
+  mount Rapidfire::Engine => "/surveys/rapidfire", :as => 'rapidfire'
+  resources :survey_assignments, path: 'surveys/assignments'
   post '/surveys/clone/:id' => 'surveys#clone'
   put '/surveys/question_position' => 'questions#update_position'
   get '/surveys/question_group_question/:id' => 'questions#get_question'
@@ -154,8 +156,9 @@ Rails.application.routes.draw do
   put '/surveys_question_group' => 'surveys_question_groups#update'
   resources :surveys
   get '/surveys/select_course/:id' => 'surveys#course_select'
-  mount Rapidfire::Engine => "/rapidfire", :as => 'rapidfire'
-
+  put '/survey_notification' => 'survey_notifications#update'
+  post '/survey_notification/create' => 'survey_assignments#create_notifications', as: 'create_notifications'
+  post '/survey_notification/send' => 'survey_assignments#send_notifications', as: 'send_notifications'
 
   # Onboarding
   get 'onboarding(/*any)' => 'onboarding#index', as: :onboarding

@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/WikiEducationFoundation/rapidfire
-  revision: 6c42a8f4303d9af4b8cd9036d092bd42a8e1d1b6
+  revision: 3a7160c7127280decd7604cc8645776d9f2f563e
   branch: master
   specs:
     rapidfire (2.1.0)
@@ -237,6 +237,10 @@ GEM
     lumberjack (1.0.10)
     mail (2.6.3)
       mime-types (>= 1.16, < 3)
+    mailgun_rails (0.8.0)
+      actionmailer (>= 3.2.13)
+      json (>= 1.7.7)
+      rest-client (>= 1.6.7)
     mediawiki_api (0.5.0)
       faraday (~> 0.9, >= 0.9.0)
       faraday-cookie_jar (~> 0.0, >= 0.0.6)
@@ -251,6 +255,7 @@ GEM
     net-scp (1.2.1)
       net-ssh (>= 2.6.5)
     net-ssh (3.0.2)
+    netrc (0.11.0)
     newrelic_rpm (3.15.0.314)
     nokogiri (1.6.7.2)
       mini_portile2 (~> 2.0.0.rc2)
@@ -328,6 +333,10 @@ GEM
     redcarpet (3.3.4)
     responders (2.1.1)
       railties (>= 4.2.0, < 5.1)
+    rest-client (1.8.0)
+      http-cookie (>= 1.0.2, < 2.0)
+      mime-types (>= 1.16, < 3.0)
+      netrc (~> 0.7)
     rspec (3.4.0)
       rspec-core (~> 3.4.0)
       rspec-expectations (~> 3.4.0)
@@ -370,6 +379,8 @@ GEM
       faraday (>= 0.7.6)
     sexp_processor (4.7.0)
     shellany (0.0.1)
+    shoulda-matchers (3.1.1)
+      activesupport (>= 4.0.0)
     simple_form (3.2.1)
       actionpack (> 4, < 5.1)
       activemodel (> 4, < 5.1)
@@ -454,6 +465,7 @@ DEPENDENCIES
   i18n-js (>= 3.0.0.rc11)
   jbuilder (~> 2.0)
   launchy
+  mailgun_rails
   mediawiki_api (= 0.5.0)
   mysql2
   newrelic_rpm
@@ -476,6 +488,7 @@ DEPENDENCIES
   rubocop
   selenium-webdriver
   sentry-raven
+  shoulda-matchers (~> 3.1)
   simple_form
   simplecov
   squeel!
@@ -487,4 +500,4 @@ DEPENDENCIES
   zeus
 
 BUNDLED WITH
-   1.10.6
+   1.11.2

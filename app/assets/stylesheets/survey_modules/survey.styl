@@ -1,16 +1,25 @@
-.block--thank-you__container
+.survey-page .block--thank-you__container
   padding 30px
   +above(tablet)
     padding 100px
-  
-  
-  h2
+
+  h2.big-title
     text-align center
     font-weight 300
     color bayoux
     +above(tablet)
       font-size 45px
-  
+
   p
     line-height 1.35
-  
+
+[data-survey-form-container]
+  opacity 1
+  transition opacity 300ms linear
+  &.loading
+    opacity 0
+
+
+[data-question-group="0"] .block__container:first-child .survey__block-nav .button:first-child
+  visibility hidden
+  pointer-events none

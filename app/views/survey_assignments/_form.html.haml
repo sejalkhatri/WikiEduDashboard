@@ -1,0 +1,31 @@
+= simple_form_for(@survey_assignment) do |f|
+  .block.survey-assignments.block--clear.default-form
+    = f.error_notification
+    .form__row
+      %h4 Survey
+      = f.select :survey_id, options_from_collection_for_select(Survey.all, 'id', 'name', {:selected => @survey_assignment.survey_id } ), {}, { :data => { :chosen_select => true}}
+
+    .form__row
+      %h4 Distribution Target
+      = f.select :cohort_ids, options_from_collection_for_select(Cohort.all, 'id', 'title', {:selected => @survey_assignment.cohorts.pluck(:id) }), {}, { :multiple => true,  :data => { :chosen_select => true}}
+
+    .form__row
+      = f.label :courses_user_role
+      = user_role_select(f)
+
+    .form__row
+      %h4 Notification Schedule
+      = f.number_field :send_date_days
+      = f.label :send_date_days, "Days", class: 'inline-label'
+      = f.select :send_before, options_for_select([['Before', true], ['After', false]])
+      = f.select :send_date_relative_to, options_for_select(@send_relative_to_options)
+
+    .form__row
+      = f.check_box :published
+      = f.label :published, "Publish this assignment", class: "inline-label"
+
+    .form__row
+      = f.label :notes
+      = f.text_area :notes
+
+    = f.button :submit, :class => "button dark"

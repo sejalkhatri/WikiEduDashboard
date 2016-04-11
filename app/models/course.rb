@@ -56,6 +56,7 @@ class Course < ActiveRecord::Base
            through: :courses_users, source: :user
   has_many :volunteers, -> { where('courses_users.role > 1') },
            through: :courses_users, source: :user
+  has_many :survey_notifications
 
   #########################
   # Activity by the users #
@@ -114,6 +115,19 @@ class Course < ActiveRecord::Base
   scope :archived, lambda {
     where('end <= ?', Time.zone.now - UPDATE_LENGTH)
   }
+
+  def self.will_be_ready_for_survey(args)
+    days_offset, before, relative_to = args.values_at(:days, :before, :relative_to)
+    where("#{relative_to} > '#{Time.zone.today}'")
+  end
+
+  def self.ready_for_survey(args)
+    days_offset, before, relative_to = args.values_at(:days, :before, :relative_to)
+    today = Time.zone.today
+    send_survey_time = today
+    send_survey_time = today + days_offset.days if before
+    where("#{relative_to} <= '#{send_survey_time}'")
+  end
 
   ##################
   # Course content #

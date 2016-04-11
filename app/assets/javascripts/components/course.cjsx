@@ -70,6 +70,7 @@ Course = React.createClass(
             </div>
           </div>
         )
+
       if @state.course.submitted
         if !@getCurrentUser().admin
           alerts.push (
@@ -125,6 +126,20 @@ Course = React.createClass(
           </div>
         </div>
       )
+
+    if @state.course.survey_notifications? && @state.course.survey_notifications.length
+      @state.course.survey_notifications.map (notification) =>
+        alerts.push(
+          <div className='notification notification--survey' key='upcoming_module' key={"survey_notification_#{notification.id}"}>
+            <div className='container'>
+              <div>
+                <p>{CourseUtils.i18n('survey.notification_message',@state.course.string_prefix)}</p>
+                <a href={notification.survey_url}>{CourseUtils.i18n('survey.link',@state.course.string_prefix)}</a>
+              </div>
+              <div><button className='dismiss pull-right' onClick={=> CourseActions.dismissNotification(notification.id)}>&#xd7;</button></div>
+            </div>
+          </div>
+        )
 
     if @state.course.type == 'ClassroomProgramCourse'
       timeline = (

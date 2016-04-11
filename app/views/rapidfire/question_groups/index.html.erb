@@ -1,9 +1,7 @@
 
 <div class='container survey__edit'>
 <div class='section-header'>
-<h2>
-  Question Groups
-</h2>
+<h1>Question Groups</h1>
 
 <div id='app'></div>
 
@@ -18,7 +16,7 @@
       <%= render partial: "question_group", collection: @question_groups %>
   </ul>
 <% else %>
-  <p>No Question Groups. <%= link_to "Create One", new_question_group_path%></p>
+  <p class='light-text'>No Question Groups. <%= link_to "Create One", new_question_group_path%></p>
 <% end %>
 
 

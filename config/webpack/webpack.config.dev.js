@@ -1,12 +1,10 @@
 var webpack = require('webpack');
 var source = __dirname + "/../../app/assets/javascripts/";
 
-
-
 module.exports = {
   entry: {
     main: hotEntry(source + "main.js"),
-    survey: hotEntry(source + "surveys/survey.coffee"),
+    survey: hotEntry(source + "surveys/survey.js"),
     survey_admin: hotEntry(source + "surveys/survey-admin.coffee")
   },
   output: {
@@ -45,9 +43,6 @@ module.exports = {
   plugins: [
     new webpack.HotModuleReplacementPlugin()
   ],
-  coffeelint: {
-    configFile: __dirname + "/coffeelint.json"
-  },
   devtool: 'inline-source-map'
 };
 
