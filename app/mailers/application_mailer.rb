@@ -1,4 +1,4 @@
 class ApplicationMailer < ActionMailer::Base
-  default from: "Notifications <sender@#{ENV['mailgun_domain']}>"
+  default from: ENV['SENDER_EMAIL_ADDRESS'] || 'surveys@wikiedu.org'
   layout 'mailer'
 end
