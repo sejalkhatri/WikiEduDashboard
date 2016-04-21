@@ -1,4 +1,10 @@
 class AverageViewsImporter
+  def self.update_new_average_views
+    articles = Article.namespace(Article::Namespaces::MAINSPACE)
+                      .where(average_views_updated_at: nil)
+    update_average_views(articles)
+  end
+
   def self.update_average_views(articles)
     article_batches = articles.each_slice(30)
     article_batches.each do |batch|

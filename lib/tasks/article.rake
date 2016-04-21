@@ -1,5 +1,6 @@
 require "#{Rails.root}/lib/importers/article_importer"
 require "#{Rails.root}/lib/importers/view_importer"
+require "#{Rails.root}/lib/importers/average_views_importer"
 require "#{Rails.root}/lib/importers/rating_importer"
 require "#{Rails.root}/lib/cleaners"
 require "#{Rails.root}/lib/cleaners/revisions_cleaner"
@@ -22,6 +23,12 @@ namespace :article do
   task update_new_article_views: 'batch:setup_logger' do
     Rails.logger.debug 'Updating views for newly added articles'
     ViewImporter.update_new_views
+  end
+
+  desc 'Update average views for newly added articles'
+  task update_new_article_average_views: 'batch:setup_logger' do
+    Rails.logger.debug 'Updating average views for newly added articles'
+    AverageViewsImporter.update_new_average_views
   end
 
   desc 'Update ratings for all articles'
