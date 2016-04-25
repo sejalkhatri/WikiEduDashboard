@@ -3,13 +3,15 @@ class SurveyNotification < ActiveRecord::Base
   belongs_to :survey_assignment
   belongs_to :course
 
-  scope :active, -> { where(dismissed: false) }
+  scope :active, -> { where(dismissed: false, completed: false) }
   scope :completed, -> { where(completed: true) }
-  scope :dismissed, -> { where(completed: true) }
+  scope :dismissed, -> { where(dismissed: true) }
 
   def send_email
     # In these environments only send emails to the users specified in ENV['survey_test_email']
     return if ['development', 'staging'].include?(Rails.env) && !ENV['survey_test_email'].split(',').include?(user.email)
+    return if email_sent
+    return if user.email.nil?
     SurveyMailer.notification(self).deliver_now unless email_sent
     update_attribute('email_sent', true)
   end
@@ -23,7 +25,7 @@ class SurveyNotification < ActiveRecord::Base
   end
 
   def user
-    CoursesUsers.find(courses_user_id).user
+    CoursesUsers.find(courses_users_id).user
   end
 
   def course

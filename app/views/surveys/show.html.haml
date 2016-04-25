@@ -1,21 +1,20 @@
 - if params.key?("preview")
-  .notice.text-center Preview Mode On
+  .survey-previewing Preview Mode
 
 %p#notice= notice
 
-%div{data: {survey_form_container: true}, class: 'loading'}
+%div{data: {survey_form_container: true, notification: survey_notification_id(@notification)}, class: 'loading'}
   - if @survey.intro?
     .block__container
       .block.block--text.disabled.not-seen{"data-survey-block" => "0", "data-intro" => true}
         %h1.survey__title= @survey.name
+        %strong Course: #{pretty_course_title(@course)}
         - if @survey.intro?
           = @survey.intro.html_safe
           .survey__block-nav
             %div
             - if @survey.show_courses
-              %p
-                %strong Current Selected Course: #{@course.title}
-              %button.button.survey__next.dark{"data-next-survey-block" => "course" }
+              %button.button.survey__next.dark{"data-next-survey-block" => "", "data-no-validate" => true}
                 %span Start
                 %span.icon.icon-rt_arrow
             - else
@@ -25,7 +24,7 @@
 
 
   - @surveys_question_groups.each_with_index do |group, index|
-    - if check_conditionals(group.question_group)
+    - if check_conditionals(group.question_group) && !group.question_group.questions.empty?
       = render partial: "question_group", locals: question_group_locals(group, index, @surveys_question_groups.length)
 
   .block__container

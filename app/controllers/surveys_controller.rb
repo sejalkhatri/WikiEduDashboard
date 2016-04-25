@@ -1,4 +1,5 @@
 class SurveysController < ApplicationController
+  layout 'surveys_minimal', only: [:show]
   helper Rapidfire::ApplicationHelper
   include CourseHelper
   include SurveysHelper
@@ -12,13 +13,14 @@ class SurveysController < ApplicationController
     :destroy,
     :edit_question_groups,
     :course_select,
-    :show_with_course
+    :results
   ]
+  before_action :ensure_logged_in
   before_action :set_question_groups, only: [
     :show,
     :edit,
     :edit_question_groups,
-    :show_with_course
+    :results
   ]
   before_action :check_if_closed, only: [:show]
   before_action :set_notification, only: [:show]
@@ -30,12 +32,27 @@ class SurveysController < ApplicationController
     @surveys = Survey.all
   end
 
+  def results_index
+
+  end
+
+  def results
+    respond_to do |format|
+      format.html
+      format.csv do
+        filename = "#{@survey.name}-results#{Date.today}.csv"
+        send_data @survey.to_csv, filename: filename
+      end
+    end
+  end
+
   # GET /surveys/1
   # GET /surveys/1.json
   def show
     @courses = Course.all
     unless validate_user_for_survey
-      redirect_to(main_app.root_path, flash: { notice: 'Sorry, You do not have access to this survey' })
+      redirect_to(main_app.root_path,
+                  flash: { notice: 'Sorry, You do not have access to this survey' })
       return
     end
     if @survey.show_courses && !course?
@@ -161,22 +178,17 @@ class SurveysController < ApplicationController
   end
 
   def user_is_assigned_to_survey(return_notification = false)
-    users = courses_users
-    return false if users.empty?
-    users.each do |cu|
-      notification = survey_notification(cu.id)
-      return false unless notification && notification.survey.id == @survey.id
-      return true unless return_notification
-      return notification if return_notification
+    notifications = current_user.survey_notifications.collect do |n|
+      n if n.survey.id == @survey.id
     end
+    return false if notifications.empty?
+    return true unless return_notification
+    return notifications.first
   end
 
-  def courses_users
-    CoursesUsers.where(user_id: current_user.id)
-  end
-
-  def survey_notification(id)
-    SurveyNotification.find_by(courses_user_id: id)
+  def ensure_logged_in
+    return true if current_user
+    render 'login'
   end
 
   def check_if_closed
@@ -191,6 +203,7 @@ class SurveysController < ApplicationController
 
   def set_course
     @course = find_course_by_slug(params[:course_slug]) if course_slug?
+    return unless @course.nil?
     @course = @notification.course if @notification.instance_of?(SurveyNotification)
   end
 

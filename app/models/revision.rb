@@ -16,7 +16,6 @@
 #  wp10           :float(24)
 #  wp10_previous  :float(24)
 #  ithenticate_id :integer
-#  report_url     :string(255)
 #  wiki_id        :integer
 #  mw_rev_id      :integer
 #  mw_page_id     :integer
@@ -56,5 +55,10 @@ class Revision < ActiveRecord::Base
   def infer_courses_from_user
     return [] if user.blank?
     user.courses.where('start <= ?', date).where('end >= ?', date)
+  end
+
+  def plagiarism_report_link
+    return unless ithenticate_id
+    "/recent-activity/plagiarism/report?ithenticate_id=#{ithenticate_id}"
   end
 end

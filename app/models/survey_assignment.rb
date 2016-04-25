@@ -1,4 +1,5 @@
 class SurveyAssignment < ActiveRecord::Base
+  has_paper_trail
   belongs_to :survey
   has_and_belongs_to_many :cohorts
   has_many :survey_notifications
@@ -9,9 +10,9 @@ class SurveyAssignment < ActiveRecord::Base
   scope :by_survey, -> (survey_id) { where(survey_id: survey_id) }
 
   def self.by_courses_user_and_survey(options)
-    survey_id, courses_user_id = options.values_at(:survey_id, :courses_user_id)
+    survey_id, courses_users_id = options.values_at(:survey_id, :courses_users_id)
     by_survey(survey_id).includes(:survey_notifications).where(
-      survey_notifications: { courses_user_id: courses_user_id }
+      survey_notifications: { courses_users_id: courses_users_id }
     )
   end
 
@@ -33,7 +34,7 @@ class SurveyAssignment < ActiveRecord::Base
   end
 
   def courses_users_ready_for_survey
-    courses = courses_with_pending_notifications.collect do |course|
+    courses = courses_users_ready_for_notifications.collect do |course|
       course.courses_users.where(role: courses_user_role)
     end
     courses.flatten
@@ -47,8 +48,20 @@ class SurveyAssignment < ActiveRecord::Base
     published && !courses_with_pending_notifications.empty?
   end
 
+  def courses_users_ready_for_notifications
+    cohorts.collect { |cohort| cohort.courses.ready_for_survey(send_at) }.flatten
+  end
+
   def courses_with_pending_notifications
     cohorts.collect { |cohort| cohort.courses.will_be_ready_for_survey(send_at) }.flatten
+  end
+
+  def target_courses
+    cohorts.collect(&:courses).flatten
+  end
+
+  def target_users
+    target_courses.select { |c| c.courses_users.where(role: courses_user_role )}
   end
 
   def status

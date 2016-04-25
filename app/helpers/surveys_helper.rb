@@ -15,6 +15,10 @@ module SurveysHelper
     render partial: "rapidfire/answers/matrix_answer_labels", locals: { answer: answer, course: @course }
   end
 
+  def survey_preview_url(survey)
+    "#{survey_url(survey)}?preview"
+  end
+
   def question_answer_field_name(form, multiple)
     name = "answer_group[#{form.object.question_id}][answer_text]"
     if multiple
@@ -29,13 +33,13 @@ module SurveysHelper
     field_name = question_answer_field_name(f, multiple)
     options = answer_options(answer, course).collect { |o| o.is_a?(Array) ? [ "#{o[1].tr('_', ' ')}", o[0]] : o }
     if options.length == 0
-      content_tag(:div, data: { remove_me: true })
+      content_tag :div, 'remove me', data: { remove_me: true }
     else
       select_tag(field_name, options_for_select(options), {
           include_blank: "#{answer.question.multiple ? 'Select all that apply' : 'Select an option'}",
           required: is_required_question?(answer),
           multiple: answer.question.multiple,
-          data: { chosen_select: true }
+          class: 'chosen-container'
         })
     end
   end
@@ -67,7 +71,11 @@ module SurveysHelper
   end
 
   def question_type(answer)
-    answer.question.type.to_s.split("::").last.downcase
+    question_type_to_string(answer.question)
+  end
+
+  def question_type_to_string(question)
+    question.type.to_s.split('::').last.downcase
   end
 
   def is_required_question?(answer)
@@ -142,7 +150,7 @@ module SurveysHelper
     !is_grouped_question(answer) && is_grouped_question(answers[index + 1])
   end
 
-  def question_group_locals(surveys_question_group, index, total)
+  def question_group_locals(surveys_question_group, index, total, results = false)
     @question_group = surveys_question_group.rapidfire_question_group
     @answer_group_builder = Rapidfire::AnswerGroupBuilder.new({
       params: {},
@@ -154,7 +162,8 @@ module SurveysHelper
       answer_group_builder: @answer_group_builder,
       question_group_index: index,
       surveys_question_group: surveys_question_group,
-      total: total
+      total: total,
+      results: results
     }
   end
 
@@ -177,7 +186,8 @@ module SurveysHelper
 
   def conditional_string(answer)
     if answer.question.conditionals?
-      "data-conditional-question=#{strip_tags(answer.question.conditionals).tr(' ', '_')}"
+      string = strip_tags(answer.question.conditionals).tr(' ', '_').tr("'", "\\'")
+      "data-conditional-question=#{string}"
     end
   end
 
@@ -208,5 +218,10 @@ module SurveysHelper
     else
       set_course
     end
+  end
+
+  def survey_notification_id(notification)
+    return nil if notification == false || notification.nil?
+    return notification.id
   end
 end

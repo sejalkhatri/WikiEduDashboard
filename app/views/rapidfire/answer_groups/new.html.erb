@@ -1,11 +1,5 @@
 <% if params.key?("preview") %>
-<div class="notice text-center">Preview Mode On</div>
-<% end %>
-
-<% if can_administer? %>
-<div class='survey__admin-tools'>
-  <%= link_to "Edit this Question Group", question_group_questions_path(@question_group) %>
-</div>
+<div class="survey-previewing">Preview Mode</div>
 <% end %>
 
 <div data-survey-form-container class='loading'>
@@ -17,7 +11,8 @@
       total: 1,
       :surveys_question_group => {
         show_title: false
-      }
+      },
+      results: false
     } %>
   <div data-question-group-blocks="1">
     <div class='block__container'>

@@ -7,7 +7,7 @@ json.course do
             :weekdays, :no_day_exceptions, :updated_at, :string_prefix, :type)
 
   json.term @course.cloned_status == 1 ? '' : @course.term
-  json.legacy @course.id < 10000
+  json.legacy @course.legacy?
   json.ended !current?(@course) && @course.start < Time.zone.now
   json.published CohortsCourses.exists?(course_id: @course.id)
   json.enroll_url "#{request.base_url}#{course_slug_path(@course.slug)}/enroll/"
@@ -23,10 +23,10 @@ json.course do
   if current_user
     json.next_upcoming_assigned_module ctpm.next_upcoming_assigned_module
     json.first_overdue_module ctpm.first_overdue_module
-    json.survey_notifications(@course.survey_notifications.where(dismissed: false)) do |notification|
-      if notification.user.id == current_user.id
+    json.survey_notifications(current_user.survey_notifications.active) do |notification|
+      if notification.course.id == @course.id
         json.id notification.id
-        json.survey_url "#{survey_url(notification.survey)}?notification=#{notification.id}"
+        json.survey_url "#{course_survey_url(notification)}"
       end
     end
   end

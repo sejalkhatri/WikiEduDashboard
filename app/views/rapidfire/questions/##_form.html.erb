@@ -1,3 +1,5 @@
+<%= render 'rapidfire/question_groups/admin_header' %>
+
 <div class='container container--pad-y block survey__form default-form'>
 <%= form_for form, as: :question, url: url, method: method do |f| %>
   <%- unless form.errors.empty? %>
@@ -23,7 +25,24 @@
   <br/>
   <div>
 
-  <%= f.text_area :question_text, data: { question_text: true }, id: 'question_text' %>
+    <div data-tabs>
+    <ul>
+      <li><a href="#question-text-markdown">Markdown</a></li>
+      <li><a href="#question-text-preview">Preview</a></li>
+      <li><a href="#question-text-html">HTML</a></li>
+    </ul>
+    <div id="question-text-markdown">
+      <%= f.text_area :question_text, data: { question_text: true, markdown_source: 'question-text-markdown' }, id: 'question_text' %>
+    </div>
+    <div id="question-text-preview">
+      <div data-markdown-preview="question-text-markdown"></div>
+    </div>
+    <div id="question-text-html">
+      <div data-markdown-source-view="question-text-markdown"></div>
+    </div>
+  </div>
+
+
   <div data-question-text-editor></div>
   <br/>
   <div data-question-options>
@@ -156,7 +175,7 @@
       <div class='survey__question__conditional-row' data-conditional="<%= question_conditional_string(@question) %>">
         Show if
         <%= select_tag "",
-            options_from_collection_for_select(@question_group.questions.for_conditionals, "id", "question_text"),
+            options_from_collection_for_select(@question_group.questions.where('id is not null'), "id", "question_text"),
             :include_blank => "Select a question",
             :data => {:conditional_select => true}%>
         <span data-conditional-operator></span>

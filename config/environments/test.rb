@@ -15,6 +15,7 @@ ENV['no_views'] = 'false'
 ENV['disable_onboarding'] = 'false'
 ENV['disable_training'] = 'false'
 ENV['hot_loading'] = 'false'
+ENV['SENDER_EMAIL_ADDRESS'] = 'root@localhost'
 
 Rails.application.configure do
   # Settings specified here will take
@@ -25,6 +26,8 @@ Rails.application.configure do
   # your test database is "scratch space" for the test suite and is wiped
   # and recreated between test runs. Don't rely on the data there!
   config.cache_classes = true
+
+  config.active_record.raise_in_transactional_callbacks = true
 
   # Do not eager load code on boot. This avoids loading your whole application
   # just for the purpose of running a single test. If you are using a tool that

@@ -76,8 +76,6 @@ Rails.application.routes.draw do
   resources :gradeables, collection: { update_multiple: :put }
   post 'courses/:course_id/timeline' => 'timeline#update_timeline',
        constraints: { course_id: /.*/ }
-  post 'courses/:course_id/gradeables' => 'timeline#update_gradeables',
-       constraints: { course_id: /.*/ }
 
   get 'revisions' => 'revisions#index'
 
@@ -94,7 +92,7 @@ Rails.application.routes.draw do
   post 'analytics(/*any)' => 'analytics#results'
 
   # Recent Activity
-  get 'recent-activity/plagiarism/refresh' => 'recent_activity#refresh_report_urls'
+  get 'recent-activity/plagiarism/report' => 'recent_activity#plagiarism_report'
   get 'recent-activity(/*any)' => 'recent_activity#index', as: :recent_activity
 
   # Revision analytics JSON API for React
@@ -107,6 +105,11 @@ Rails.application.routes.draw do
   get 'revision_analytics/recent_edits',
       controller: 'revision_analytics',
       action: 'recent_edits'
+  get 'revision_analytics/recent_uploads',
+      controller: 'revision_analytics',
+      action: 'recent_uploads'
+
+
 
   # Wizard
   get 'wizards' => 'wizard#wizard_index'
@@ -145,9 +148,12 @@ Rails.application.routes.draw do
   root to: 'home#index'
 
   mount Rapidfire::Engine => "/surveys/rapidfire", :as => 'rapidfire'
+  get '/surveys/results' => 'surveys#results_index', as: 'results'
   resources :survey_assignments, path: 'surveys/assignments'
   post '/surveys/clone/:id' => 'surveys#clone'
   put '/surveys/question_position' => 'questions#update_position'
+  get '/survey/results/:id' => 'surveys#results', as: 'survey_results'
+  get '/survey/question/results/:id' => 'questions#results', as: 'question_results'
   get '/surveys/question_group_question/:id' => 'questions#get_question'
   get '/surveys/:id/question_group' => 'surveys#edit_question_groups', :as => "edit_question_groups"
   post '/surveys/question_group/clone/:id' => 'surveys#clone_question_group'

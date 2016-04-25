@@ -9,7 +9,11 @@ const rangeslider = require('nouislider');
 require('wnumb');
 const wNumb = window.wNumb;
 require('slick-carousel');
-
+require('velocity-animate');
+// const markdown = require('../../utils/markdown_it.js').default();
+import _throttle from 'lodash.throttle';
+import _assign from 'lodash.assign';
+import urlParse from 'url-parse';
 
 //--------------------------------------------------------
 // Required Internal Modules
@@ -23,21 +27,24 @@ const Utils = require('./SurveyUtils.coffee');
 
 // Scroll Animation
 // const scrollDuration = 500;
-// const scrollEasing = [0.19, 1, 0.22, 1];
-
-
-const chosenOptions = {
-  disable_search_threshold: 10,
-  width: '75%'
-};
+const scrollEasing = [0.19, 1, 0.22, 1];
 
 const slickOptions = {
   infinite: false,
   arrows: false,
+  accessibility: false,
   draggable: false,
   touchMove: false,
+  speed: 400,
   cssEase: 'cubic-bezier(1, 0, 0, 1)',
+  adaptiveHeight: true
 };
+
+//--------------------------------------------------------
+// Constants
+//--------------------------------------------------------
+
+const BLOCK_CONTAINER_SELECTOR = '.block__container';
 
 //--------------------------------------------------------
 // Survey Module
@@ -49,16 +56,22 @@ const Survey = {
   submitted: [],
   surveyConditionals: {},
   previewMode: false,
+  detachedParentBlocks: {},
+  currentBlockValidated: false,
 
   init() {
+    this.indexQuestionGroups();
+    // this.renderMarkdown();
     this.cacheSelectors();
     this.getUrlParam();
     this.removeUnneededBlocks();
     this.initConditionals();
+    this.indexBlocks();
     this.listeners();
     this.initBlocks();
     this.initRangeSliders();
     this.setFormValidationSections();
+    this.getNotificationId();
   },
 
   cacheSelectors() {
@@ -76,7 +89,16 @@ const Survey = {
     this.$main.on('click', '[data-next-survey-block]', this.validateCurrentQuestion.bind(this));
     this.$main.on('click', '[data-prev-survey-block]', this.previousBlock.bind(this));
     $('[data-submit-survey]').on('click', this.submitAllQuestionGroups.bind(this));
-    $('[data-chosen-select]').chosen(chosenOptions);
+    // $('[data-chosen-select]').chosen(chosenOptions);
+    $('[data-void-checkboxes]').on('click', this.voidCheckboxSelections.bind(this));
+    $('.survey__multiple-choice-field input[type=checkbox]').on('change', this.uncheckVoid.bind(this));
+    $('.block input, .block textarea, .block select').on('change keydown', this.removeErrorState.bind(this));
+  },
+
+  indexQuestionGroups() {
+    $('[data-question-group-blocks]').each((i, qgBlock) => {
+      $(qgBlock).data('question-group-blocks', i);
+    });
   },
 
   initBlocks() {
@@ -87,29 +109,50 @@ const Survey = {
   },
 
   indexBlocks(cb = null) {
-    // $('.block[data-survey-block].hidden').removeAttr('data-survey-block');
-    // const $surveyBlocks = $('.block[data-survey-block]:not(.hidden)');
-    // $surveyBlocks.each((i, block) => {
-    //   const $block = $(block);
-    //   $block.attr('data-survey-block', i);
-    // });
-    //
-    // this.$questionBlocks = $surveyBlocks;
-
+    $('.block__container').each((i, block) => {
+      $(block).attr('data-progress-index', i + 1);
+    });
     if (cb) { return cb(); }
   },
 
   initSlider() {
-    this.parentSlider = $('[data-survey-form-container]').slick(slickOptions);
+    this.$surveyContainer = $('[data-survey-form-container]');
+    this.parentSlider = this.$surveyContainer.slick(_assign({}, slickOptions, { adaptiveHeight: false }));
+    this.parentSlider.on('beforeChange', (e) => {
+      if (!this.currentBlockValidated) {
+        e.preventDefault();
+      }
+    });
+    this.parentSlider.on('afterChange', (e, slick, currentSlide) => {
+      this.focusNewQuestion();
+      const $currentBlock = $(slick.$slides[currentSlide]);
+      this.updateProgress($currentBlock);
+    });
+
     this.groupSliders = [];
     $('[data-question-group-blocks]').each((i, questionGroup) => {
       const slider = $(questionGroup).slick(slickOptions);
+      $(slider).on('beforeChange', (e) => {
+        if (!this.currentBlockValidated) {
+          e.preventDefault();
+        }
+      });
       $(slider).on('afterChange', (e, slick, currentSlide) => {
+        const $currentBlock = $(slick.$slides[currentSlide]);
+        this.updateProgress($currentBlock);
         this.currentBlock = currentSlide;
+        this.currentBlockValidated = false;
+        this.focusNewQuestion();
       });
       this.groupSliders.push(slider);
     });
     $(this.parentSlider).removeClass('loading');
+  },
+
+  focusNewQuestion() {
+    $('.top-nav').velocity('scroll', {
+      easing: scrollEasing
+    });
   },
 
   prevQuestionGroup() {
@@ -132,6 +175,7 @@ const Survey = {
 
   previousBlock(e) {
     e.preventDefault();
+    this.currentBlockValidated = true;
     const $slider = $(this.$currentSlider);
     const $slick = $slider.slick('getSlick');
     if (($slick.currentSlide - 1) === -1) {
@@ -177,7 +221,8 @@ const Survey = {
   },
 
   getUrlParam() {
-    if (location.search.length && location.search.replace('?', '') === 'preview') {
+    const urlParams = urlParse(window.location.href, true).query;
+    if (urlParams.preview !== undefined) {
       this.previewMode = true;
     }
   },
@@ -214,8 +259,12 @@ const Survey = {
         const answerId = fielddata[1].replace(']', '');
         const answerKey = fielddata[2].replace(']', '');
         if (name.indexOf('[]') === -1) { // Single Answer Question
-          val[answerKey] = value;
-          answerGroup[answerId] = val;
+          if (typeof answerGroup[answerId] !== 'undefined') {
+            answerGroup[answerId][answerKey] = value;
+          } else {
+            val[answerKey] = value;
+            answerGroup[answerId] = val;
+          }
         } else { // Multi-Select (Checkbox)
           if (value !== '0') {
             if (typeof answerGroup[answerId] !== 'undefined') {
@@ -240,36 +289,74 @@ const Survey = {
   },
   validateCurrentQuestion(e) {
     e.preventDefault();
-    const $block = $(e.target).parents('.block');
+    const $target = $(e.target);
+    const $block = $target.parents('.block');
     this.$currentBlock = $block;
     let $form = $block.parents('[data-survey-form]');
     this.$currentSlider = $form.find('[data-question-group-blocks]');
     const $errorsEl = $block.find('[data-errors]');
     const questionGroupIndex = this.currentQuestionGroupIndex();
 
-    if ($(e.target).closest('.button').data('no-validate') !== undefined) {
+    if ($target.closest('.button').data('no-validate') !== undefined) {
+      this.currentBlockValidated = true;
       this.nextBlock(e);
       return;
     }
 
-    let validation = $form.parsley({ uiEnabled: false }).validate({ group: `${$block.data('parsley-group')}` });
+    let validation = $form.parsley({ uiEnabled: false })
+                          .validate({ group: `${$block.data('parsley-group')}` });
 
     if ((typeof questionGroupIndex !== 'undefined' && questionGroupIndex !== null)) {
       $form = $(this.$surveyForm[questionGroupIndex]);
     }
 
-    if ($block.find('[data-required-checkbox]').length) {
-      if ($block.find('input[type="checkbox"]:checked').length === 0) {
-        validation = false;
-      }
+    // Validate Checkbox
+    if ($block.find('[data-required-checkbox]').length &&
+        $block.find('input[type="checkbox"]:checked').length === 0) {
+      validation = false;
+    }
+
+    // Validate Required Matrix Question Rows
+    if ($block.hasClass('survey__question--matrix')) {
+      this.validateMatrixBlock($block, (bool) => {
+        validation = bool;
+      });
     }
 
     if (validation === true) {
       $block.removeClass('highlight');
       $errorsEl.empty();
+      this.currentBlockValidated = true;
       this.nextBlock(e);
     } else {
-      this.handleRequiredQuestion();
+      this.handleRequiredQuestion($errorsEl);
+    }
+  },
+
+  validateMatrixBlock($block, cb) {
+    let valid = true;
+
+    $block.find('.survey__question-row.required').each((i, row) => {
+      const $row = $(row);
+
+      if ($block.hasClass('radio')) {
+        if ($row.find('input:checked').length === 0) {
+          $row.addClass('highlight');
+          valid = false;
+        }
+      }
+      if ($block.hasClass('rangeinput')) {
+        if ($row.find('input[type=number]').val() === '') {
+          $row.addClass('highlight');
+          valid = false;
+        }
+      }
+    });
+
+    if (valid) {
+      cb(true);
+    } else {
+      cb(false);
     }
   },
 
@@ -285,16 +372,26 @@ const Survey = {
     });
   },
 
-  handleRequiredQuestion() {
-    return this.$currentBlock.addClass('highlight');
+  handleRequiredQuestion($errorsEl) {
+    this.currentBlockValidated = false;
+    $errorsEl.empty().append('<span>Question Required</span>');
+    this.$currentBlock.addClass('highlight');
   },
 
   focusField() {
     return $(this.surveyBlocks[this.currentBlock]).find('input, textarea').first().focus();
   },
 
-  updateProgress(index) {
-    const width = `${(index / (this.surveyBlocks.length - 1)) * 100}%`;
+  updateProgress($currentBlock) {
+    const total = $('[data-progress-index]').length;
+    let currentIndex;
+    if ($currentBlock.hasClass('new_answer_group')) {
+      currentIndex = $($currentBlock.find('[data-progress-index]')).data('progress-index');
+    } else {
+      currentIndex = $currentBlock.data('progress-index');
+    }
+    const progressWidth = (currentIndex / total) * 100;
+    const width = `${progressWidth}%`;
     this.surveyProgress.css('width', width);
   },
 
@@ -312,7 +409,7 @@ const Survey = {
       const min = parseInt($(slider).data('min'));
       const max = parseInt($(slider).data('max'));
       const step = parseInt($(slider).data('step'));
-      const divisions = $(slider).data('divisions');
+      // const divisions = $(slider).data('divisions');
       const format = $(slider).data('format');
 
       const numberFormatting = (() => {
@@ -338,74 +435,83 @@ const Survey = {
         step,
         pips: {
           mode: 'count',
-          values: 5,
-          density: (typeof divisions !== 'undefined' && divisions !== null) ? parseInt(divisions) : 4,
+          values: 2,
+          density: max,
           format: wNumb(numberFormatting)
         },
         connect: 'lower'
       });
 
-      slider.noUiSlider.on('change', (value) => {
-        $input.val(parseInt(value[0])).trigger('change');
-      });
+      const $slider = $(slider);
+      const $handle = $($slider.find('.noUi-handle'));
+      // $handle.text(0);
 
-      $input.on('change', ({ target }) => {
-        slider.noUiSlider.set(target.value);
-      });
+
+      const updateValue = (value) => {
+        const val = parseInt(value[0]);
+        $handle.attr('data-content', val);
+        $input.val(val).trigger('change');
+      };
+
+      const throttled = _throttle(updateValue, 100);
+
+      slider.noUiSlider.on('update', throttled);
+
+
+      // slider.noUiSlider.on('change', (value) => {
+      //
+      // });
+
+      // $input.on('change', ({ target }) => {
+      //   slider.noUiSlider.set(target.value);
+      // });
     });
-  },
-
-  showThankYou() {
-    // this.$surveyForm.addClass('hidden');
-    // this.$intro.addClass('hidden');
-    // this.$thankYou.velocity('scroll', {
-    //   duration: scrollDuration,
-    //   easing: scrollEasing,
-    //   offset: -200,
-    //   complete: () => {
-    //     return this.animating = false;
-    //   }
-    // });
-    //
-    // this.$thankYou.velocity({
-    //   opacity: [1, 0],
-    //   translateY: ['0%', '20%']
-    // }, {
-    //   queue: false
-    // });
   },
 
   initConditionals() {
     $('[data-conditional-question]').each((i, question) => {
       const $conditionalQuestion = $(question);
-      let $question = $($(question).parents('.block__container'));
-      const { question_id, operator, value, multi } = Utils.parseConditionalString($conditionalQuestion.data('conditional-question'));
+      let $question = $($(question).parents(BLOCK_CONTAINER_SELECTOR));
+      const conditionalOptions = Utils.parseConditionalString($conditionalQuestion.data('conditional-question'));
+      const { question_id, value } = conditionalOptions;
+
       if ($question.find('.survey__question--matrix').length) {
+        this.detachedParentBlocks[$question.data('block-index')] = $question;
+        $question.detach();
         $question = $conditionalQuestion;
         $question.addClass('hidden');
       } else {
         $question.detach();
       }
 
-      if (typeof this.surveyConditionals[question_id] !== 'undefined') {
-        this.surveyConditionals[question_id].children.push($question[0]);
-      } else {
-        this.surveyConditionals[question_id] = {};
-        this.surveyConditionals[question_id].children = [$question[0]];
-      }
+      this.addConditionalQuestionToStore(question_id, $question);
 
       if ((typeof value !== 'undefined' && value !== null)) { this.surveyConditionals[question_id][value] = $question; }
       this.surveyConditionals[question_id].currentAnswers = [];
 
-      switch (operator) {
-        case '*presence':
-          return this.conditionalPresenceListeners(question_id, $question);
-        case '<': case '>':case '<=': case '>=':
-          return this.conditionalComparisonListeners(question_id, operator, value, $question);
-        default:
-          return this.conditionalAnswerListeners(question_id, multi);
-      }
+      this.addListenersToConditional($question, conditionalOptions);
     });
+  },
+
+  addConditionalQuestionToStore(questionId, $question) {
+    if (typeof this.surveyConditionals[questionId] !== 'undefined') {
+      this.surveyConditionals[questionId].children.push($question[0]);
+    } else {
+      this.surveyConditionals[questionId] = {};
+      this.surveyConditionals[questionId].children = [$question[0]];
+    }
+  },
+
+  addListenersToConditional($question, conditionalOptions) {
+    const { question_id, operator, value, multi } = conditionalOptions;
+    switch (operator) {
+      case '*presence':
+        return this.conditionalPresenceListeners(question_id, $question);
+      case '<': case '>':case '<=': case '>=':
+        return this.conditionalComparisonListeners(question_id, operator, value, $question);
+      default:
+        return this.conditionalAnswerListeners(question_id, multi);
+    }
   },
 
   conditionalAnswerListeners(id, multi) {
@@ -418,7 +524,7 @@ const Survey = {
       if (multi && $checkedInputs.length) {
         value = [];
         $checkedInputs.each((i, input) => {
-          value.push($(input).val().split(' ').join('_'));
+          value.push($(input).val().trim().split(' ').join('_'));
         });
       } else if (multi) {
         value = [];
@@ -450,7 +556,7 @@ const Survey = {
         this.resetConditionalQuestion($questionBlock);
       }
 
-      this.indexBlocks();
+      // this.indexBlocks();
     });
   },
 
@@ -463,13 +569,11 @@ const Survey = {
       // Check if empty
       if (value.length === 0 && currentAnswers) {
         conditionalGroup.currentAnswers = [];
-        // resetQuestions = true;
       }
 
       // Check if conditional was present and is no longer
       currentAnswers.forEach((a) => {
         if (value.indexOf(a === -1)) {
-          // resetQuestions = true;
           const index = currentAnswers.indexOf(a);
           if (currentAnswers.length === 1) {
             currentAnswers = [];
@@ -480,7 +584,7 @@ const Survey = {
       });
       // Check if value matches a conditional question
       value.forEach((v) => {
-        if ((conditionalGroup[v] !== null)) {
+        if (conditionalGroup[v] !== undefined) {
           conditional = conditionalGroup[v];
           currentAnswers.push(v);
           conditionalGroup.currentAnswers = currentAnswers;
@@ -492,7 +596,6 @@ const Survey = {
       }
     } else {
       conditional = conditionalGroup[value];
-      // resetQuestions = true;
     }
 
     this.resetConditionalGroupChildren(conditionalGroup);
@@ -513,7 +616,7 @@ const Survey = {
       this.handleParentPresenceConditionalChange({
         present: target.value.length,
         conditionalGroup: this.surveyConditionals[id],
-        $parent: $(`#question_${id}`).parents('.block__container')
+        $parent: $(`#question_${id}`).parents(BLOCK_CONTAINER_SELECTOR)
       });
     });
   },
@@ -556,18 +659,31 @@ const Survey = {
       children.forEach((question) => {
         this.resetConditionalQuestion($(question));
         if ($(question).hasClass('survey__question-row')) {
-          const $parentBlock = $(question).parents('.block');
+          const $parentBlock = $(question).parents(BLOCK_CONTAINER_SELECTOR);
+          const blockIndex = $(question).data('block-index');
           if (!($parentBlock.find('.survey__question-row:not([data-conditional-question])').length > 1)) {
             this.resetConditionalQuestion($parentBlock);
+            if (this.detachedParentBlocks[blockIndex] === undefined) {
+              this.detachedParentBlocks[blockIndex] = $parentBlock;
+              this.removeSlide($parentBlock);
+              $parentBlock.detach();
+            }
           }
         }
       });
     }
   },
 
+  removeSlide($block) {
+    const $slider = $(this.$currentSlider);
+    $slider.slick('slickRemove', $block.data('slick-index') + 1);
+  },
+
   resetConditionalQuestion($question) {
     if ($question.hasClass('survey__question-row')) {
       $question.removeAttr('style').addClass('hidden not-seen disabled');
+    } else {
+      $question.detach();
     }
     $question.find('input, textarea').val('');
     $question.find('input:checked').removeAttr('checked');
@@ -581,9 +697,24 @@ const Survey = {
     const $grandParents = $parent.parents('[data-question-group-blocks]');
     const parentIndex = $parent.data('slick-index');
     const questionGroupIndex = $grandParents.data('question-group-blocks');
-    if ($parent.next('.block__container').find('.block.survey__question--matrix').length === 0) {
+    if ($question.hasClass('matrix-row')) {
+      this.attachMatrixParentBlock($question, questionGroupIndex);
+    } else {
       const $slider = this.groupSliders[questionGroupIndex];
       $slider.slick('slickAdd', $question, parentIndex);
+      this.indexBlocks();
+    }
+  },
+
+  attachMatrixParentBlock($question, questionGroupIndex) {
+    const $parent = $question.parents(BLOCK_CONTAINER_SELECTOR);
+    const $parentBlock = this.detachedParentBlocks[$parent.data('block-index')];
+    // If parent node is currently detached, re-add it to the question_group slider
+    if (!$.contains(document, $parentBlock)) {
+      const parentIndex = $parentBlock[0].dataset.blockIndex;
+      const $slider = this.groupSliders[questionGroupIndex];
+      $slider.slick('slickAdd', $parentBlock, (parentIndex - 1));
+      this.indexBlocks();
     }
   },
 
@@ -596,7 +727,41 @@ const Survey = {
   },
 
   removeUnneededBlocks() {
-    $('[data-remove-me]').parents('.block__container').remove();
+    $('[data-remove-me]').parents(BLOCK_CONTAINER_SELECTOR).remove();
+  },
+
+  voidCheckboxSelections(e) {
+    const $target = $(e.target);
+    $target.parents(BLOCK_CONTAINER_SELECTOR).find('input[type=checkbox]:checked').each((i, input) => {
+      $(input).prop('checked', false);
+    });
+    $target.closest('input[type=checkbox]').prop('checked', true);
+  },
+
+  uncheckVoid(e) {
+    const $target = $(e.target);
+    if ($target.data('void-checkboxes')) { return; }
+    $target.parents(BLOCK_CONTAINER_SELECTOR).find('input[data-void-checkboxes]').prop('checked', false);
+  },
+
+  removeErrorState(e) {
+    const $block = $(e.target).parents('.block');
+    if ($block.hasClass('highlight')) {
+      $block.removeClass('highlight');
+      $block.find('.survey__question-row.required.highlight').removeClass('highlight');
+      $block.find('[data-errors]').empty();
+    }
+  },
+
+  // renderMarkdown() {
+  //   $('[data-render-markdown]').each((i, el) => {
+  //     const $el = $(el);
+  //     const markdownSrc = $el.data('render-markdown');
+  //     $el.html(markdown.render(markdownSrc));
+  //   });
+  // },
+  getNotificationId() {
+    this.surveyNotificationId = $('[data-notification]').data('notification');
   }
 };
 

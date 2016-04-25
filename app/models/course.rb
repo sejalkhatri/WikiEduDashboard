@@ -15,6 +15,9 @@
 #  user_count        :integer          default(0)
 #  article_count     :integer          default(0)
 #  revision_count    :integer          default(0)
+#  upload_count      :integer          default(0)
+#  uploads_in_use_count :integer       default(0)
+#  upload_usages_count :integer        default(0)
 #  slug              :string(255)
 #  listed            :boolean          default(TRUE)
 #  signup_token      :string(255)
@@ -28,7 +31,7 @@
 #  timeline_end      :date
 #  day_exceptions    :string(2000)     default("")
 #  weekdays          :string(255)      default("0000000")
-#  new_article_count :integer
+#  new_article_count :integer          default(0)
 #  no_day_exceptions :boolean          default(FALSE)
 #  trained_count     :integer          default(0)
 #  cloned_status     :integer
@@ -36,6 +39,7 @@
 #
 
 require "#{Rails.root}/lib/course_cleanup_manager"
+require "#{Rails.root}/lib/course_cache_manager"
 require "#{Rails.root}/lib/course_update_manager"
 require "#{Rails.root}/lib/course_training_progress_manager"
 require "#{Rails.root}/lib/revision_stat"
@@ -116,17 +120,18 @@ class Course < ActiveRecord::Base
     where('end <= ?', Time.zone.now - UPDATE_LENGTH)
   }
 
-  def self.will_be_ready_for_survey(args)
-    days_offset, before, relative_to = args.values_at(:days, :before, :relative_to)
-    where("#{relative_to} > '#{Time.zone.today}'")
+  def self.will_be_ready_for_survey(opts)
+    days_offset, before, relative_to = opts.values_at(:days, :before, :relative_to)
+    today = Time.zone.today
+    ready_date = before ? today + days_offset : today - days_offset
+    where("#{relative_to} > '#{ready_date}'")
   end
 
-  def self.ready_for_survey(args)
-    days_offset, before, relative_to = args.values_at(:days, :before, :relative_to)
+  def self.ready_for_survey(opts)
+    days_offset, before, relative_to = opts.values_at(:days, :before, :relative_to)
     today = Time.zone.today
-    send_survey_time = today
-    send_survey_time = today + days_offset.days if before
-    where("#{relative_to} <= '#{send_survey_time}'")
+    ready_date = before ? today + days_offset.days : today - days_offset.days
+    where("#{relative_to} <= '#{ready_date}'")
   end
 
   ##################
@@ -207,6 +212,10 @@ class Course < ActiveRecord::Base
     articles_courses.live.new_article.joins(:article).where('articles.namespace = 0')
   end
 
+  def uploads_in_use
+    uploads.where('usage_count > 0')
+  end
+
   def word_count
     require "#{Rails.root}/lib/word_count"
     WordCount.from_characters(character_sum)
@@ -223,64 +232,9 @@ class Course < ActiveRecord::Base
   #################
   # Cache methods #
   #################
-  def character_sum
-    return_or_calculate :character_sum
-  end
-
-  def view_sum
-    return_or_calculate :view_sum
-  end
-
-  def user_count
-    return_or_calculate :user_count
-  end
-
-  def trained_count
-    return_or_calculate :trained_count
-  end
-
-  def revision_count
-    return_or_calculate :revision_count
-  end
-
-  def article_count
-    return_or_calculate :article_count
-  end
-
-  def new_article_count
-    return_or_calculate :new_article_count
-  end
-
-  def return_or_calculate(attribute)
-    update_cache unless self[attribute]
-    self[attribute]
-  end
 
   def update_cache
-    # Do not consider revisions with negative byte changes
-    self.character_sum = courses_users
-                         .where(role: CoursesUsers::Roles::STUDENT_ROLE)
-                         .sum(:character_sum_ms)
-    self.view_sum = articles_courses.live.sum(:view_count)
-    self.user_count = students_without_nonstudents.size
-    self.trained_count = calculate_trained_count
-    self.revision_count = revisions.size
-    self.article_count = articles.namespace(0).live.size
-    self.new_article_count = new_articles.count
-    save
-  end
-
-  def calculate_trained_count
-    # The cutoff date represents the switch from on-wiki training, indicated by
-    # the 'trained' attribute of a User, to the in-dashboard training module
-    # system introduced for the beginning of 2016. For courses after the cutoff
-    # date, 'trained_count' is represents the count of students who don't have
-    # assigned training modules that are overdue.
-    if start > CourseTrainingProgressManager::TRAINING_BOOLEAN_CUTOFF_DATE
-      students_without_overdue_training
-    else
-      students_without_nonstudents.trained.size
-    end
+    CourseCacheManager.new(self).update_cache
   end
 
   def manual_update
@@ -295,7 +249,7 @@ class Course < ActiveRecord::Base
   # Callback methods #
   ####################
   def cleanup_articles(user)
-    CourseCleanupManager.cleanup_articles(self, user)
+    CourseCleanupManager.new(self, user).cleanup_articles
   end
 
   #################

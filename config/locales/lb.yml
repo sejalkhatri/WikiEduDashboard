@@ -15,10 +15,13 @@ lb:
     log_in: Aloggen
     log_out: Ausloggen
     recent_activity: Rezent Aktivitéit
+    search: eng Fro stellen
     sign_up_extended: Mat Wikipedia umellen
     sign_up_log_in_extended: mat Wikipedia
     sign_up: Schreift Iech an
     training: Formatioun
+  dashboard:
+    review_orientation: Orientatioun nokucken
   home:
     log_in: Mat Wikipedia aloggen
     sign_up: Mat Wikipedia umellen
@@ -115,6 +118,7 @@ lb:
     date_time: Datum/Zäit
     edit_count_description: Total vun den Ännerungen
     revisions: Rezent Ännerungen
+    uploads_in_use_count: Fichieren déi an Artikele benotzt ginn
     word_count: Wierder derbäigesat
   namespace:
     user: Benotzernummraum
@@ -174,4 +178,8 @@ lb:
   timeline:
     due_default: Nächst Woch fälleg
     title: Chronologie
+  survey:
+    email:
+      course: 'Cours: %{course_info}'
+      closing: Mat beschte Gréiss
 ...

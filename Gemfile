@@ -30,6 +30,8 @@ gem 'simple_form'
 
 gem 'acts_as_list'
 
+gem 'sentimental'
+
 # UNIVERSAL TEXT CONVERTER - FOR MARDOWN TO MEDIAWIKI TEXT
 gem 'pandoc-ruby', '~> 1.0.0'
 
@@ -39,6 +41,8 @@ gem 'i18n-js', '>= 3.0.0.rc11'
 gem 'mailgun_rails'
 
 gem 'factory_girl_rails'
+
+gem 'paper_trail'
 
 # If you want to be able to hack locally on rapidfire,
 # run `export RAPIDFIREHACKINGMODE=true` in your terminal.

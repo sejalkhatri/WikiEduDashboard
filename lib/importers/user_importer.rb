@@ -1,4 +1,5 @@
 require "#{Rails.root}/lib/replica"
+require "#{Rails.root}/lib/wiki_api"
 
 #= Imports and updates users from Wikipedia into the dashboard database
 class UserImporter
@@ -7,11 +8,9 @@ class UserImporter
     if user.nil?
       user = new_from_omniauth(auth)
     else
-      user.update(
-        global_id: auth.uid,
-        wiki_token: auth.credentials.token,
-        wiki_secret: auth.credentials.secret
-      )
+      user.update(global_id: auth.uid,
+                  wiki_token: auth.credentials.token,
+                  wiki_secret: auth.credentials.secret)
     end
     user
   end
@@ -31,7 +30,9 @@ class UserImporter
   end
 
   def self.new_from_username(username, wiki: nil)
-    require "#{Rails.root}/lib/wiki_api"
+    # All mediawiki usernames have the first letter capitalized, although
+    # the API returns data if you replace it with lower case.
+    username[0] = username[0].mb_chars.capitalize.to_s
     user = User.find_by(username: username)
     return user if user
 
@@ -42,49 +43,22 @@ class UserImporter
     User.find_or_create_by(username: username, id: id)
   end
 
-  def self.add_users(data, role, course, save=true)
-    data.map do |p|
-      add_user(p, role, course, save)
-    end
-  end
-
-  def self.add_user(user, role, course, save=true)
-    empty_user = User.new(id: user['id'])
-    new_user = save ? User.find_or_create_by(id: user['id']) : empty_user
-    new_user.username = user['username']
-    if save
-      if !role.nil? && !course.nil?
-        role_index = %w(student instructor online_volunteer
-                        campus_volunteer wiki_ed_staff)
-        has_user = course.users.role(role_index[role]).include? new_user
-        unless has_user
-          role = get_wiki_ed_role(user, role)
-          CoursesUsers.new(user: new_user, course: course, role: role).save
-        end
-      end
-      new_user.save
-    end
-    new_user
-  end
-
-  # If a user has (Wiki Ed) in their name, assign them to the staff role
-  def self.get_wiki_ed_role(user, role)
-    (user['username'].include? '(Wiki Ed)') ? 4 : role
-  end
-
   def self.update_users(users=nil)
     u_users = Utils.chunk_requests(users || User.all) do |block|
       Replica.new.get_user_info block
     end
 
     User.transaction do
-      u_users.each do |u|
-        begin
-          User.find(u['id']).update(u.except('id'))
-        rescue ActiveRecord::RecordNotFound => e
-          Rails.logger.warn e
-        end
+      u_users.each do |user_data|
+        update_user_from_replica_data(user_data)
       end
     end
+  end
+
+  def self.update_user_from_replica_data(user_data)
+    username = user_data['wiki_id']
+    user = User.find_by(username: username)
+    return if user.blank?
+    user.update!(user_data.except('id'))
   end
 end

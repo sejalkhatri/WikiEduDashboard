@@ -46,7 +46,7 @@ en:
     log_out: Log out
     my_dashboard: My Dashboard
     recent_activity: Recent Activity
-    search: search ask.wikiedu.org
+    search: ask a question
     sign_up_extended: Sign up with Wikipedia
     # FIXME: deprecate lego message
     sign_up_log_in_extended: with Wikipedia
@@ -70,6 +70,7 @@ en:
     orientation_notice: >
       Before you create a course, let's go through orientation to help you get
       started. (It takes about 30 minutes to complete.)
+    review_orientation: Review Orientation
     start_orientation: Start Orientation
 
   home:
@@ -299,6 +300,9 @@ en:
     date_time: Date/Time
     edit_count_description: Total Edits
     revisions: Recent Edits
+    upload_count: Commons Uploads
+    uploads_in_use_count: files used in articles
+    upload_usages_count: total usages across languages
     view_count_description: Article Views
     view: Views
     word_count: Words Added
@@ -315,10 +319,10 @@ en:
     no_dyk_eligible: There are not currently any DYK-eligible articles.
     no_plagiarism: There are not currently any recent revisions suspected of plagiarism.
     no_edits: There are no recent edits.
-    refresh_plagiarism: Refresh plagiarism reports
     did_you_know_eligible: Did You Know Eligible
     possible_plagiarism: Possible Plagiarism
     recent_edits: Recent Edits
+    recent_uploads: Recent Uploads
 
   revisions:
     chars_added: Chars added
@@ -390,7 +394,7 @@ en:
         overdue training. Are you sure you want to do this?
       # header, message and summary are wikitext output that gets posted on user talk pages.
       header: You have an overdue training assignment.
-      message: Please complete the assigned [https://dashboard.wikiedu.org/training/students training modules]. --~~~~
+      message: Please complete the assigned [%{link} training modules].
       summary: student training overdue
 
   wizard:
@@ -488,7 +492,12 @@ en:
       week or change your assignment dates to make room for a new one.
 
   survey:
+    login_message: 'Thank you for your time. Please log in to your Wiki Ed dashboard to take the survey.'
     email:
       headline: "Hello, %{username}"
-      message: "A survey is available for: %{course_title}"
+      message_line1: "We hope you had a great term! Wiki Ed is seeking your feedback to improve our resources and support for your Wikipedia assignments. Your response is crucial to improving our current offerings."
+      message_line2: "Are you willing to take 15 minutes to fill out our instructor survey? Click the button below to help us make teaching with Wikipedia an even more rewarding and valuable experience."
+      course: "Course: %{course_info}"
+      closing: "Sincerely,"
+      signed: "- the Wiki Ed team"
       link: "Take Survey"

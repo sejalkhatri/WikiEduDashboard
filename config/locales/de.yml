@@ -19,7 +19,7 @@ de:
     log_out: Abmelden
     my_dashboard: Meine Übersichtsseite
     recent_activity: Letzte Aktivitäten
-    search: ask.wikiedu.org durchsuchen
+    search: eine Frage stellen
     sign_up_extended: Mit Wikipedia registrieren
     sign_up_log_in_extended: mit Wikipedia
     sign_up: Registrieren
@@ -36,6 +36,7 @@ de:
     opt_out: Opt-Out der Einführung beantragen
     orientation_notice: Bevor du einen Kurs erstellst, sehe dir die Einführung an,
       um dir beim Anfangen zu helfen. Die Vervollständigung dauert ungefähr 30 Minuten.
+    review_orientation: Einführung überprüfen
     start_orientation: Einführung beginnen
   home:
     explore: Entdecken
@@ -218,6 +219,9 @@ de:
     word_count_doc: Eine Schätzung der Anzahl der durch die Kursstudenten während
       der Kursdauer hinzugefügten Wörter in Hauptnamensraum-Artikeln.
     yourcourses: Deine Kurse
+    survey:
+      notification_message: Für diesen Kurs ist eine Umfrage verfügbar
+      link: An der Umfrage teilnehmen
   courses_generic:
     articles_none: Es gibt noch keine bearbeiteten Artikel für dieses Projekt.
     assignment_end: Zeitleisten-Ende
@@ -261,6 +265,9 @@ de:
     date_time: Datum/Uhrzeit
     edit_count_description: Gesamte Bearbeitungen
     revisions: Letzte Bearbeitungen
+    upload_count: Auf Commons hochgeladene Dateien
+    uploads_in_use_count: in Artikeln verwendete Dateien
+    upload_usages_count: Gesamte Verwendungen auf allen Sprachen
     view_count_description: Artikelaufrufe
     view: Aufrufe
     word_count: Hinzugefügte Wörter
@@ -424,4 +431,21 @@ de:
     unable_to_add_week: Du kannst keine neuen Wochen hinzufügen, wenn deine Zeitleiste
       voll ist. Lösche mindestens eine Woche oder ändere deine Zuweisungsdaten ab,
       um Platz für ein neues zu schaffen.
+  survey:
+    login_message: Vielen Dank für deine Zeit. Bitte melde dich beim Wiki Ed Dashboard
+      an, um an der Umfrage teilzunehmen.
+    email:
+      headline: Hallo %{username}
+      message_line1: Wir hoffen, dass du einen tollen Kurs hast! Wiki Ed benötigt
+        deine Rückmeldung, um unsere Ressourcen und die Unterstützung für deine Wikipedia-Zuweisungen
+        zu verbessern. Deine Antwort ist für die Verbesserung unserer aktuellen Angebote
+        entscheidend.
+      message_line2: Bist du bereit, 15 Minuten für das Ausfüllen unserer Umfrage
+        für Kursleiter zu opfern? Klicke auf die unten stehende Schaltfläche, um uns
+        dabei zu helfen, das Unterrichten mit Wikipedia noch lohnender und wertvoller
+        zu machen.
+      course: 'Kurs: %{course_info}'
+      closing: Mit freundlichen Grüßen
+      signed: Mitarbeiter von Wiki Ed
+      link: An der Umfrage teilnehmen
 ...

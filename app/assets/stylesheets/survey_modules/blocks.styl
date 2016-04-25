@@ -5,10 +5,13 @@
   display flex
   justify-content space-between
   overflow hidden
-  padding-top $spacer
+  padding-top $spacer * 3
 
   .button
     float none
+
+.survey__block-nav__next-container
+  display flex
 
 .block .survey__block-nav.submit
   text-align center
@@ -44,5 +47,10 @@
     overflow hidden
 
   .block.highlight
-    textarea, .chosen-single
+    textarea,
+    input[type=text],
+    .survey__question-row:not(.matrix-row) .noUi-background
+      border-color $warning_border
+      background $warning-background
+    .chosen-single
       border-color $warning_text

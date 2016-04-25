@@ -24,4 +24,8 @@ class RevisionAnalyticsController < ApplicationController
       current_user: current_user
     )
   end
+
+  def recent_uploads
+    @uploads = CommonsUpload.last(100)
+  end
 end
