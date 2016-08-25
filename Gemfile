@@ -99,6 +99,7 @@ group :test do
   gem 'simplecov', require: false
   gem 'codeclimate-test-reporter', require: nil
   gem 'shoulda-matchers', '~> 3.1'
+  gem 'rails-controller-testing'
 end
 
 group :production do
