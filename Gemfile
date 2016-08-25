@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 ruby '2.3.1'
-gem 'rails', '4.2.7.1'
+gem 'rails', '5.0.0.1'
 gem 'jbuilder', '~> 2.0'
 gem 'haml-rails'
 
@@ -18,14 +18,14 @@ gem 'omniauth-mediawiki', git: 'https://github.com/ragesoss/omniauth-mediawiki.g
 
 gem 'validates_email_format_of'
 
-gem 'deep_cloneable', '~> 2.1.1'
+gem 'deep_cloneable', '~> 2.2.1'
 
 gem 'sentry-raven'
 gem 'piwik_analytics', git: 'https://github.com/halfdan/piwik-ruby-tracking.git'
 gem 'newrelic_rpm'
 
 gem 'redcarpet'
-gem 'breadcrumbs_on_rails'
+gem 'breadcrumbs_on_rails', git: 'https://github.com/weppos/breadcrumbs_on_rails'
 gem 'hashugar'
 
 gem 'simple_form'
@@ -72,7 +72,6 @@ group :development do
   gem 'capistrano-passenger'
   gem 'rack-mini-profiler'
   gem 'rails-erd'
-  gem 'squeel', git: 'https://github.com/activerecord-hackery/squeel.git', branch: 'master'
   gem 'annotate', '~> 2.7.1'
 end
 
