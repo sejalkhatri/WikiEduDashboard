@@ -49,11 +49,11 @@ const DatePicker = React.createClass({
     }
   },
 
-  handleDatePickerChange(e, selectedDate, modifiers) {
-    if (_.includes(modifiers, 'disabled')) {
+  handleDatePickerChange(e, selectedDate) {
+    const date = moment(selectedDate).format('YYYY-MM-DD');
+    if (this.isDayDisabled(date)) {
       return;
     }
-    const date = moment(selectedDate).format('YYYY-MM-DD');
     this.onChange({ target: { value: date } });
     this.refs.datefield.focus();
     this.setState({ datePickerVisible: false });
