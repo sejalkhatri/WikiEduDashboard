@@ -3,7 +3,7 @@
 
 McFly = require 'mcfly'
 Flux = new McFly()
-CourseStore = require './course_store.coffee'
+CourseStore = require('./course_store.js').default
 ServerActions     = require('../actions/server_actions.js').default
 
 # Data

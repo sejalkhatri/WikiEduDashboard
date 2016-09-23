@@ -8,16 +8,10 @@ ServerActions = require('../../actions/server_actions.js').default
 CourseDateUtils = require('../../utils/course_date_utils.coffee')
 ValidationStore = require '../../stores/validation_store.coffee'
 
-getState = (course_id) ->
-  course = CourseStore.getCourse()
-  course: course
-  anyDatesSelected: course.weekdays?.indexOf(1) >= 0
-  blackoutDatesSelected: course.day_exceptions?.length > 0
-
 FormPanel = React.createClass(
   displayName: 'FormPanel'
   updateCourseDates: (value_key, value) ->
-    updatedCourse = CourseDateUtils.updateCourseDates(@props.course, value_key, value)
+    updatedCourse = CourseDateUtils.updateCourseDates(@props.course, value_kefy, value)
     CourseActions.updateCourse updatedCourse
 
   saveCourse: ->
