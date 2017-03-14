@@ -1,4 +1,6 @@
 import React from 'react';
+// import StudentStats from './student_stats.jsx';
+// import ByStudents from './by_students.jsx';
 
 const InstructorStats = React.createClass({
   render() {
