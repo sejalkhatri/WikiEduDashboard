@@ -1,3 +1,6 @@
+-if @user.course_student?
+  = render 'user_profiles/student_cumulative_stats', presenter: @individual_stats_presenter
+
 .user_stats
   #instructor-profile-stats
     %h5
