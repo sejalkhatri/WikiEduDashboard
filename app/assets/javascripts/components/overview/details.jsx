@@ -113,6 +113,7 @@ const Details = React.createClass({
           onChange={this.updateSlugPart}
           value={this.props.course.title}
           value_key="title"
+          validation={CourseUtils.courseSlugRegex()}
           editable={canRename}
           type="text"
           label={CourseUtils.i18n('title', this.props.course.string_prefix)}
