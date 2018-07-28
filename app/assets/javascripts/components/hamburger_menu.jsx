@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import CustomLink from './CustomLink.jsx';
 import LanguagePicker from './language_picker.jsx';
 
-const HamburgerMenu  = createReactClass({
+const HamburgerMenu = createReactClass({
   displayName: 'HamburgerMenu',
 
   propTypes: {
@@ -35,12 +35,12 @@ const HamburgerMenu  = createReactClass({
     };
   },
 
-  toggleClass(){
+  toggleClass() {
     this.setState({ isActive: !this.state.isActive });
   },
 
   render() {
-    const {rootUrl, logoPath, exploreUrl, exploreName, userSignedIn, ifAdmin, trainingUrl, helpDisabled, askUrl, wikiEd, userPermissions, languageSwitcherEnabled, currentUser, destroyUrl, omniauthUrl} = this.props;
+    const { rootUrl, logoPath, exploreUrl, exploreName, userSignedIn, ifAdmin, trainingUrl, helpDisabled, askUrl, wikiEd, userPermissions, languageSwitcherEnabled, currentUser, destroyUrl, omniauthUrl } = this.props;
     let myDashboard;
     let forAdmin;
     let help;
@@ -146,13 +146,13 @@ const HamburgerMenu  = createReactClass({
             {languageSwitcher}
             <div className="hamburger_menu_wrapper">
               <div className ="bm-burger-button" onClick={this.toggleClass}>
-                <div className ={(this.state.isActive)?'change':''}>
+                <div className ={(this.state.isActive) ? 'change' : ''}>
                   <div className = "bar1" />
                   <div className = "bar2" />
                   <div className = "bar3" />
                 </div>
               </div>
-              <div className = {`bm-menu-wrap ${(this.state.isActive)?'show':''}`}>
+              <div className = {`bm-menu-wrap ${(this.state.isActive) ? 'show' : ''}`}>
                 <div className= "bm-menu">
                   <li>
                     <CustomLink to={exploreUrl} name={exploreName} clickedElement="explore" />
