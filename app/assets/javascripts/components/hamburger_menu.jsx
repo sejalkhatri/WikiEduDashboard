@@ -38,7 +38,7 @@ const HamburgerMenu  = createReactClass({
   toggleClass(){
     this.setState({ isActive: !this.state.isActive });
   },
-  
+
   render() {
     const {rootUrl, logoPath, exploreUrl, exploreName, userSignedIn, ifAdmin, trainingUrl, helpDisabled, askUrl, wikiEd, userPermissions, languageSwitcherEnabled, currentUser, destroyUrl, omniauthUrl} = this.props;
     let myDashboard;
@@ -52,9 +52,7 @@ const HamburgerMenu  = createReactClass({
     if (languageSwitcherEnabled)
     {
       languageSwitcher = (
-        <li>
-          <LanguagePicker />
-        </li>
+        <LanguagePicker />
       );
     }
     if (userSignedIn)
